@@ -1,10 +1,8 @@
 package com.jpabook.jpashop.service;
 
-import com.jpabook.jpashop.domain.Address;
-import com.jpabook.jpashop.domain.Member;
-import com.jpabook.jpashop.domain.Order;
-import com.jpabook.jpashop.domain.OrderStatus;
+import com.jpabook.jpashop.domain.*;
 import com.jpabook.jpashop.domain.item.Album;
+import com.jpabook.jpashop.domain.item.Book;
 import com.jpabook.jpashop.domain.item.Item;
 import com.jpabook.jpashop.domain.item.Movie;
 import com.jpabook.jpashop.exception.NotEnoughStockException;
@@ -99,9 +97,64 @@ public class OrderServiceTest {
     @Test
     public void 주문취소(){
         //given
+        Member member = new Member();
+        member.setName("yujin");
+        member.setAddress(new Address("서울","동소문로 248","23953"));
+        memberService.join(member);
+        Long memberId= member.getId();
 
+
+
+        Book book = new Book();
+        book.setName("harry potter3");
+        book.setPrice(4000);
+        book.setIsbn("ASBD1234");
+        book.setAuthor("rowling");
+        book.setStockQuantity(1000);
+        itemService.saveItem(book);
+        Long itemId = book.getId();
+
+        int orderCount = 10;
         //when
+        Long orderId = orderService.order(memberId, itemId, orderCount);
 
+        orderService.cancelOrder(orderId);
         //then
+        Order order = orderRepository.findOne(orderId);
+        assertEquals("주문 취소시 재고가 복구", 1000, book.getStockQuantity());
+        assertEquals("주문 취소시 상태는 CANCEL", OrderStatus.CANCEL, order.getStatus());
+
+    }
+    @Test/*(expected = IllegalStateException.class)*/
+    public void 주문취소_배송상태예외처리(){
+        //given
+        Member member = new Member();
+        member.setName("yujin");
+        member.setAddress(new Address("서울","동소문로 248","23953"));
+        memberService.join(member);
+        Long memberId= member.getId();
+
+        Book book = new Book();
+        book.setName("harry potter3");
+        book.setPrice(4000);
+        book.setIsbn("ASBD1234");
+        book.setAuthor("rowling");
+        book.setStockQuantity(1000);
+        itemService.saveItem(book);
+        Long itemId = book.getId();
+
+        int orderCount = 10;
+        //when
+        Long orderId = orderService.order(memberId, itemId, orderCount);
+        Order order = orderRepository.findOne(orderId);
+
+        order.getDelivery().setStatus(DeliveryStatus.COMP); //예외가 터지는 지점(배송상태 완료에 따른취소 불가)
+        //orderService.cancelOrder(orderId);
+        //then
+        assertThrows(IllegalStateException.class,()->orderService.cancelOrder(orderId));
+        //fail("배송상태가 COMP인 상품은 취소불가 처리해야함");
     }
 }
+/*단위 테스트 코드를 작성하는 것이 더 의미가 있다.
+* 실행 속도의 개선은 물론이고, 어느 부분에서 트러블이 발생했는지 파악 하기 더욱 수월
+* 도메인 주도 설계일 경우 도메인에 구현한 로직들을 테스트해보는 것도 가능한 방법이다*/
