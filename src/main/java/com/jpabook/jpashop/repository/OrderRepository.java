@@ -65,5 +65,7 @@ public class OrderRepository {
             .setParameter("memberName", memberName)
             .setMaxResults(1000) //최대 1000건 조회
             .getResultList();
+    /*동적 쿼리를 받을 수 있으나, null처리가 안 된다
+    * Repository말고 service나 controller에서 null을 걸러준다면?*/
     }
 }
