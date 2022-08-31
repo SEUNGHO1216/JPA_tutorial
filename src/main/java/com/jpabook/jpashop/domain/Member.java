@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +15,7 @@ public class Member {
     @Column(name = "member_id")
     private Long id;
 
+    //@NotEmpty //프레젠테이션계층에서의 검증로직이 엔티티에까지 와버린 상황(좋지 않음)
     @Column(unique = true)
     private String name;
 
